@@ -11,3 +11,7 @@ docker exec -it broker kafka-topics --bootstrap-server broker:9092 --list
 
 # Describe a topic
 docker exec -it broker kafka-topics --bootstrap-server broker:9092 --describe --topic ip_addresses_by_countries
+
+# Write topic content to file
+
+docker exec -it broker kafka-console-consumer --bootstrap-server broker:9092 --topic ip_addresses_by_location --from-beginning > output.txt
