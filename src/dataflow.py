@@ -1,5 +1,4 @@
 from bytewax import Dataflow, spawn_cluster, AdvanceTo, Emit
-from bytewax.testing import doctest_ctx
 from kafka import KafkaProducer, KafkaConsumer
 import requests
 import json
@@ -14,38 +13,35 @@ def input_builder(worker_index, total_workers):
         bootstrap_servers=["localhost:9092"],
         auto_offset_reset='earliest'
     )
+    epoch = 0
     for message in consumer:
-        ip_address = json.loads(message.value)
+        ip_address = message.value.decode('ascii')
         yield Emit(ip_address)
         epoch += 1
         yield AdvanceTo(epoch)
 
 
 def output_builder(worker_index, worker_count):
-    def send_to_kafka():
-        producer.send('user_ip_addresses_by_locations', key=f"{location_json['country_name']}".encode(
-        'ascii'), value=location_json)
+    def send_to_kafka(previous_feed):
+        location_json = previous_feed[1]
+        producer.send('ip_addresses_by_location', key=f"{location_json['country_name']}".encode('ascii'), value=location_json)
+
     return send_to_kafka
 
 def get_location(ip_address):
-    response = requests.get(f'https://ipapi.co/200.34.24.56/json/').json()
+    response = requests.get(f'https://ipapi.co/{ip_address}/json/')
+    response_json = response.json()
     location_data = {
         "ip": ip_address,
-        "city": response.get("city"),
-        "region": response.get("region"),
-        "country_name": response.get("country_name")
+        "city": response_json.get("city"),
+        "region": response_json.get("region"),
+        "country_name": response_json.get("country_name")
     }
     return location_data
 
-
-def save_location_to_kafka(location_json):
-    producer.send('user_ip_addresses_by_locations', key=f"{location_json['country_name']}".encode(
-        'ascii'), value=location_json)
-
 flow = Dataflow()
 flow.map(get_location)
-# flow.map(save_location_to_kafka)
 flow.capture()
 
 if __name__ == "__main__":
-    spawn_cluster(flow, input_builder, output_builder, worker_count_per_proc=3)
+    spawn_cluster(flow, input_builder, output_builder, worker_count_per_proc=1)

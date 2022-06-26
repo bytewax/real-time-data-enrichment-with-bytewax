@@ -2,8 +2,6 @@ from kafka import KafkaProducer
 from kafka.admin import KafkaAdminClient, NewTopic
 from kafka.errors import KafkaError
 from time import sleep
-import json
-from traceback import format_exc, format_exception
 
 input_topic_name = "ip_addresses_by_countries"
 output_topic_name = "ip_addresses_by_location"
@@ -25,8 +23,9 @@ try:
 except:
     print(f"Topic {output_topic_name} already exists")
 
+# Add data to input topic
 try:
-    for line in open("ip_addresses_with_countries.txt"):
+    for line in open("misc/ip_addresses_with_countries.txt"):
         ip_address, country_raw = line.split(",")
         country = country_raw[:-1]
         producer.send(input_topic_name, key=f"{country}".encode('ascii'), value=f"{ip_address}".encode('ascii'))

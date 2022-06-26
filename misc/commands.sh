@@ -1,8 +1,3 @@
-# Create Kafka topic with 20 partitions
-rpk topic create -p 20 user_ip_addresses_and_countries
-
-# Number of Partitions = Desired Throughput / Partition Speed
-
 # Delete a kafka topic
 docker exec -it broker kafka-topics --bootstrap-server broker:9092 --delete --topic ip_addresses_by_countries
 
@@ -13,5 +8,4 @@ docker exec -it broker kafka-topics --bootstrap-server broker:9092 --list
 docker exec -it broker kafka-topics --bootstrap-server broker:9092 --describe --topic ip_addresses_by_countries
 
 # Write topic content to file
-
 docker exec -it broker kafka-console-consumer --bootstrap-server broker:9092 --topic ip_addresses_by_location --from-beginning > output.txt
