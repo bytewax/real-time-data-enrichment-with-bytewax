@@ -1,3 +1,6 @@
+# Initialize Poetry
+pip3 install pipx; pipx ensurepath; source ~/.bashrc; pipx install poetry; poetry install; poetry shell
+
 # Delete a kafka topic
 docker exec -it broker kafka-topics --bootstrap-server broker:9092 --delete --topic ip_addresses_by_countries
 
