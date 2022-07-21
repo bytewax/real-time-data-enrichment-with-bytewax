@@ -8,26 +8,13 @@ producer = KafkaProducer(value_serializer=lambda m: json.dumps(
     m).encode('ascii'), bootstrap_servers='localhost:9092')
 
 
-# def input_builder(worker_index, total_workers):
-#     consumer = KafkaConsumer(
-#         'ip_addresses_by_countries',
-#         bootstrap_servers=["localhost:9092"],
-#         auto_offset_reset='earliest'
-#     )
-#     epoch = 0
-#     for message in consumer:
-#         ip_address = message.value.decode('ascii')
-#         yield Emit(ip_address)
-#         epoch += 1
-#         yield AdvanceTo(epoch)
-
-
 def output_builder(worker_index, worker_count):
     def send_to_kafka(previous_feed):
         location_json = previous_feed[1]
         producer.send('ip_addresses_by_location', key=f"{location_json['country_name']}".encode('ascii'), value=location_json)
 
     return send_to_kafka
+
 
 def get_location(data):
     key, value = data
@@ -42,14 +29,17 @@ def get_location(data):
     }
     return location_data
 
+
 flow = Dataflow()
 flow.inspect(print)
 flow.map(get_location)
 flow.inspect(print)
 flow.capture()
 
+
 if __name__ == "__main__":
     input_config = KafkaInputConfig(
         "localhost:9092", "ip_adds", "ip_addresses_by_countries", messages_per_epoch=1
     )
     spawn_cluster(flow, input_config, output_builder)
+    # cluster_main(flow, input_config, output_builder, [], 0,)

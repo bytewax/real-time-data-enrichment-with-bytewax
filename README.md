@@ -5,15 +5,9 @@ This repo contains a Bytewax dataflow that uses Kafka as input and writes modifi
 You will need to install poetry for dependency management. The easiest way is through pipx. You can run the script in ./poetry-initializer-script.sh to install all depdencies and start a poetry shell. Find the script below for reference:
 
 ```sh
-pip3 install pipx; pipx ensurepath; source ~/.bashrc; pipx install poetry; poetry install; poetry shell
+pip install -r requirements.txt
 ```
 
-Ensure you restart all open shells to get poetry working there. If the above installation did not work, find the installation instructions on the [Poetry docs](https://python-poetry.org/docs/). Then install depdencies and start a poetry shell using the command below:
-
-```sh
-poetry install
-poetry shell
-```
 
 The poetry install command installs Bytewax and Kafka-Python. These depdencies are Python libraries that communicate with Bytewax and Kafka respectively.
 
