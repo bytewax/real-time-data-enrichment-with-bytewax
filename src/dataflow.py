@@ -1,5 +1,6 @@
-from bytewax import Dataflow, spawn_cluster, AdvanceTo, Emit
-from kafka import KafkaProducer, KafkaConsumer
+from bytewax import Dataflow, cluster_main, spawn_cluster
+from bytewax.inputs import KafkaInputConfig
+from kafka import KafkaProducer
 import requests
 import json
 
@@ -7,18 +8,18 @@ producer = KafkaProducer(value_serializer=lambda m: json.dumps(
     m).encode('ascii'), bootstrap_servers='localhost:9092')
 
 
-def input_builder(worker_index, total_workers):
-    consumer = KafkaConsumer(
-        'ip_addresses_by_countries',
-        bootstrap_servers=["localhost:9092"],
-        auto_offset_reset='earliest'
-    )
-    epoch = 0
-    for message in consumer:
-        ip_address = message.value.decode('ascii')
-        yield Emit(ip_address)
-        epoch += 1
-        yield AdvanceTo(epoch)
+# def input_builder(worker_index, total_workers):
+#     consumer = KafkaConsumer(
+#         'ip_addresses_by_countries',
+#         bootstrap_servers=["localhost:9092"],
+#         auto_offset_reset='earliest'
+#     )
+#     epoch = 0
+#     for message in consumer:
+#         ip_address = message.value.decode('ascii')
+#         yield Emit(ip_address)
+#         epoch += 1
+#         yield AdvanceTo(epoch)
 
 
 def output_builder(worker_index, worker_count):
@@ -28,7 +29,9 @@ def output_builder(worker_index, worker_count):
 
     return send_to_kafka
 
-def get_location(ip_address):
+def get_location(data):
+    key, value = data
+    ip_address = value.decode('ascii')
     response = requests.get(f'https://ipapi.co/{ip_address}/json/')
     response_json = response.json()
     location_data = {
@@ -40,8 +43,13 @@ def get_location(ip_address):
     return location_data
 
 flow = Dataflow()
+flow.inspect(print)
 flow.map(get_location)
+flow.inspect(print)
 flow.capture()
 
 if __name__ == "__main__":
-    spawn_cluster(flow, input_builder, output_builder, worker_count_per_proc=1)
+    input_config = KafkaInputConfig(
+        "localhost:9092", "ip_adds", "ip_addresses_by_countries", messages_per_epoch=1
+    )
+    spawn_cluster(flow, input_config, output_builder)
